@@ -28,8 +28,8 @@ phenotype = liability > threshold
 
 # Add missing values (1%) ----
 
-mat[sample(c(T, F), size=N * size, replace=TRUE, prob=c(1, 99))] = NA
-phenotype[sample(c(T, F), size=size, replace=TRUE, prob=c(1, 99))] = NA
+# mat[sample(c(T, F), size=N * size, replace=TRUE, prob=c(1, 99))] = NA
+# phenotype[sample(c(T, F), size=size, replace=TRUE, prob=c(1, 99))] = NA
 
 # Conversion to PLINK format ----
 
@@ -40,7 +40,7 @@ rownames(mat) = ind_names
 
 genotypes = as(mat, "SnpMatrix")
 
-phenotype = ifelse(is.na(phenotype), 0, phenotype + 1)
+phenotype = phenotype + 1
 
 subject_data = data.frame(FID=ind_names, IID=ind_names,
                           sex=c(1, 2), phenotype=phenotype)
@@ -61,3 +61,37 @@ write.plink("output/unif_Laplace_omni",
             allele.1=A,
             allele.2=B,
             position=position)
+
+# Add missing values (1%) ----
+
+mat[sample(c(T, F), size=N * size, replace=TRUE, prob=c(1, 99))] = NA
+phenotype[sample(c(T, F), size=size, replace=TRUE, prob=c(1, 99))] = 0
+
+# Conversion to PLINK format ----
+
+genotypes = as(mat, "SnpMatrix")
+
+subject_data = data.frame(FID=ind_names, IID=ind_names,
+                          sex=c(1, 2), phenotype=phenotype)
+
+rownames(subject_data) = ind_names
+
+snp_data = data.frame(chromosome=0, position=1:N, A="A", B="G")
+
+rownames(snp_data) = snp_names
+
+write.plink("output/unif_Laplace_omni_NA",
+            snps=genotypes,
+            subject.data=subject_data,
+            phenotype=phenotype,
+            sex=sex,
+            snp.data=snp_data,
+            chromosome=chromosome,
+            allele.1=A,
+            allele.2=B,
+            position=position)
+
+# Export genetic model
+
+write.table(data.frame(ID=snp_names, frequency=frequency, weight=weight),
+            "output/unif_Laplace_omni.dat")
